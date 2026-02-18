@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramadan Timings - SAOUD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Roboto+Mono:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: radial-gradient(circle at top right, #1a202c, #0d1117, #000000);
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Watermark styling */
+        .watermark {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.1);
+            letter-spacing: 5px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .header-saoud {
+            font-family: 'Amiri', serif;
+            color: #fbbf24; /* Amber-400 */
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        /* Clock Font - Roboto Mono for readability */
+        .digital-clock {
+            font-family: 'Roboto Mono', monospace;
+            transition: color 0.5s ease;
+            font-variant-numeric: tabular-nums; 
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Custom Scrollbar for table */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4 relative" onclick="enableAudio()">
+
+    <!-- Watermark -->
+    <div class="watermark">SAOUD</div>
+
+    <!-- Header -->
+    <header class="z-10 text-center mb-8 mt-12">
+        <h1 class="text-xl md:text-2xl uppercase tracking-widest text-gray-400 mb-2">Ramadan Timeing</h1>
+        <div class="h-1 w-24 bg-amber-500 mx-auto rounded-full"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full max-w-2xl z-10 space-y-8 text-center">
+        
+        <!-- Live Clock Section -->
+        <section class="glass-card p-8 fade-in">
+            <!-- 12-Hour Clock -->
+            <div id="live-clock" class="digital-clock text-4xl md:text-7xl font-bold tracking-tight mb-4">
+                00:00:00 PM
+            </div>
+            <!-- Date Format -->
+            <div id="current-date" class="text-lg md:text-xl text-gray-300 font-light tracking-wide">
+                Loading Date...
+            </div>
+            
+            <!-- Roza Counter Badge (Starts at 0) -->
+            <div id="roza-counter-container" class="mt-4 hidden">
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-amber-900/50 text-amber-200 border border-amber-500/30">
+                    🌙 <span id="roza-counter-text" class="ml-2">Days Completed: 0</span>
+                </span>
+            </div>
+        </section>
+
+        <!-- Active Event Status (Sehri/Iftar) -->
+        <section id="status-card" class="glass-card p-8 fade-in relative overflow-hidden">
+            <!-- Decorative circle -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
+
+            <h2 id="event-title" class="text-3xl font-bold header-saoud mb-2">Upcoming Event</h2>
+            
+            <div class="flex flex-col items-center justify-center space-y-2 mb-6">
+                <span class="text-gray-400 text-sm uppercase tracking-widest">Scheduled Time</span>
+                <span id="event-time-display" class="text-4xl font-semibold text-white digital-clock">--:--</span>
+            </div>
+
+            <div class="bg-black/30 rounded-xl p-6 border border-white/10">
+                <p class="text-sm text-amber-400 uppercase tracking-widest mb-2">Time Remaining</p>
+                <div id="countdown-display" class="text-4xl md:text-5xl font-mono font-bold text-white digital-clock">
+                    00:00:00
+                </div>
+                <div id="audio-status" class="text-xs text-gray-600 mt-2 h-4"></div>
+            </div>
+        </section>
+
+        <!-- Buttons -->
+        <button onclick="toggleSchedule()" class="group relative px-8 py-3 bg-transparent overflow-hidden rounded-full border border-amber-500/50 hover:border-amber-500 transition-all duration-300">
+            <div class="absolute inset-0 w-0 bg-amber-500 transition-all duration-[250ms] ease-out group-hover:w-full opacity-10"></div>
+            <span class="relative text-amber-400 group-hover:text-amber-300 font-semibold tracking-wider uppercase text-sm">View Full Schedule</span>
+        </button>
+
+    </main>
+
+    <!-- Schedule Modal -->
+    <div id="schedule-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="glass-card w-full max-w-3xl h-[80vh] flex flex-col relative animate-scale-up">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/20">
+                <h3 class="text-2xl header-saoud text-amber-400">Ramadan Schedule</h3>
+                <button onclick="toggleSchedule()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 p-4">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-[#1a202c] shadow-lg text-amber-500 text-xs uppercase tracking-wider">
+                        <tr>
+                            <th class="p-4">Day</th>
+                            <th class="p-4">Date</th>
+                            <th class="p-4">Sehri Ends</th>
+                            <th class="p-4">Iftar Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-body" class="text-sm text-gray-300 divide-y divide-white/5">
+                        <!-- Javascript will populate this -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Data Configuration ---
+        const ramadanSchedule = [
+            { day: 1, date: "Feb 19", weekday: "Thu", sehri: "04:56", iftar: "17:36" },
+            { day: 2, date: "Feb 20", weekday: "Fri", sehri: "04:55", iftar: "17:37" },
+            { day: 3, date: "Feb 21", weekday: "Sat", sehri: "04:54", iftar: "17:37" },
+            { day: 4, date: "Feb 22", weekday: "Sun", sehri: "04:53", iftar: "17:38" },
+            { day: 5, date: "Feb 23", weekday: "Mon", sehri: "04:53", iftar: "17:38" },
+            { day: 6, date: "Feb 24", weekday: "Tue", sehri: "04:52", iftar: "17:39" },
+            { day: 7, date: "Feb 25", weekday: "Wed", sehri: "04:51", iftar: "17:40" },
+            { day: 8, date: "Feb 26", weekday: "Thu", sehri: "04:50", iftar: "17:40" },
+            { day: 9, date: "Feb 27", weekday: "Fri", sehri: "04:49", iftar: "17:41" },
+            { day: 10, date: "Feb 28", weekday: "Sat", sehri: "04:49", iftar: "17:41" },
+            { day: 11, date: "Mar 01", weekday: "Sun", sehri: "04:47", iftar: "17:42" },
+            { day: 12, date: "Mar 02", weekday: "Mon", sehri: "04:46", iftar: "17:43" },
+            { day: 13, date: "Mar 03", weekday: "Tue", sehri: "04:45", iftar: "17:44" },
+            { day: 14, date: "Mar 04", weekday: "Wed", sehri: "04:44", iftar: "17:44" },
+            { day: 15, date: "Mar 05", weekday: "Thu", sehri: "04:43", iftar: "17:45" },
+            { day: 16, date: "Mar 06", weekday: "Fri", sehri: "04:42", iftar: "17:45" },
+            { day: 17, date: "Mar 07", weekday: "Sat", sehri: "04:41", iftar: "17:46" },
+            { day: 18, date: "Mar 08", weekday: "Sun", sehri: "04:40", iftar: "17:46" },
+            { day: 19, date: "Mar 09", weekday: "Mon", sehri: "04:39", iftar: "17:47" },
+            { day: 20, date: "Mar 10", weekday: "Tue", sehri: "04:38", iftar: "17:47" },
+            { day: 21, date: "Mar 11", weekday: "Wed", sehri: "04:37", iftar: "17:48" },
+            { day: 22, date: "Mar 12", weekday: "Thu", sehri: "04:36", iftar: "17:48" },
+            { day: 23, date: "Mar 13", weekday: "Fri", sehri: "04:35", iftar: "17:49" },
+            { day: 24, date: "Mar 14", weekday: "Sat", sehri: "04:34", iftar: "17:49" },
+            { day: 25, date: "Mar 15", weekday: "Sun", sehri: "04:33", iftar: "17:50" },
+            { day: 26, date: "Mar 16", weekday: "Mon", sehri: "04:32", iftar: "17:50" },
+            { day: 27, date: "Mar 17", weekday: "Tue", sehri: "04:31", iftar: "17:51" },
+            { day: 28, date: "Mar 18", weekday: "Wed", sehri: "04:29", iftar: "17:51" },
+            { day: 29, date: "Mar 19", weekday: "Thu", sehri: "04:28", iftar: "17:51" },
+            { day: 30, date: "Mar 20", weekday: "Fri", sehri: "04:27", iftar: "17:52" }
+        ];
+
+        const YEAR = 2026;
+        let hue = 0;
+        
+        // Audio Logic
+        let audioContext = null;
+        let hasPlayedAlarmForThisEvent = false;
+        let lastTargetTime = 0;
+
+        function enableAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // Play a silent tone to unlock audio on iOS/Chrome
+                const oscillator = audioContext.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 0.01;
+                oscillator.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(0.01);
+                document.getElementById('audio-status').textContent = "Audio Enabled";
+                setTimeout(() => { document.getElementById('audio-status').textContent = ""; }, 2000);
+            }
+        }
+
+        function playAlarm() {
+            if (!audioContext) return;
+            
+            // Create a beep sound (Oscillator)
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 880; // A5
+            gainNode.gain.value = 0.5;
+
+            oscillator.start();
+            
+            // Beep pattern
+            setTimeout(() => { gainNode.gain.value = 0; }, 200);
+            setTimeout(() => { gainNode.gain.value = 0.5; }, 400);
+            setTimeout(() => { gainNode.gain.value = 0; }, 600);
+            setTimeout(() => { oscillator.stop(); }, 800);
+        }
+
+
+        function formatTime12(time24) {
+            const [hours, minutes] = time24.split(':').map(Number);
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const h = hours % 12 || 12;
+            return `${h}:${minutes.toString().padStart(2, '0')} ${period}`;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            
+            // Update Time - CHANGED to 12 Hour Format
+            const timeString = now.toLocaleTimeString('en-US', { hour12: true });
+            const clockEl = document.getElementById('live-clock');
+            clockEl.textContent = timeString;
+            
+            // Color Cycle logic
+            hue = (hue + 5) % 360; 
+            clockEl.style.color = `hsl(${hue}, 80%, 60%)`;
+
+            // Update Date - CORRECTED FORMAT: Wednesday, 18 February 2026
+            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-GB', dateOptions);
+
+            updateRamadanStatus(now);
+        }
+
+        function getDateObject(dateStr, timeStr) {
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const [monthShort, day] = dateStr.split(" ");
+            const monthIndex = monthNames.indexOf(monthShort);
+            const [hours, minutes] = timeStr.split(":").map(Number);
+            
+            return new Date(YEAR, monthIndex, parseInt(day), hours, minutes, 0);
+        }
+
+        function updateRamadanStatus(now) {
+            const titleEl = document.getElementById('event-title');
+            const timeDisplayEl = document.getElementById('event-time-display');
+            const countdownEl = document.getElementById('countdown-display');
+            const rozaContainer = document.getElementById('roza-counter-container');
+            const rozaText = document.getElementById('roza-counter-text');
+
+            let targetDate = null;
+            let eventName = "";
+            let displayTime = "";
+            let completedDays = 0;
+
+            const todayIndex = ramadanSchedule.findIndex(item => {
+                const d = getDateObject(item.date, "00:00");
+                return d.getDate() === now.getDate() && d.getMonth() === now.getMonth();
+            });
+
+            if (todayIndex === -1) {
+                const firstDay = getDateObject(ramadanSchedule[0].date, "00:00");
+                if (now < firstDay) {
+                     // Before Ramadan
+                     const firstSehri = getDateObject(ramadanSchedule[0].date, ramadanSchedule[0].sehri);
+                     targetDate = firstSehri;
+                     eventName = "Ramadan Starts (Sehri)";
+                     displayTime = formatTime12(ramadanSchedule[0].sehri);
+                     rozaContainer.classList.add('hidden');
+                } else {
+                    // After Ramadan
+                    titleEl.textContent = "Eid Mubarak";
+                    timeDisplayEl.textContent = "Ramadan Completed";
+                    countdownEl.textContent = "00:00:00";
+                    rozaContainer.classList.add('hidden');
+                    return;
+                }
+            } else {
+                const todayData = ramadanSchedule[todayIndex];
+                const sehriTime = getDateObject(todayData.date, todayData.sehri);
+                const iftarTime = getDateObject(todayData.date, todayData.iftar);
+                
+                // Calculate Completed Days (Zero based start)
+                // If we are on Day 1, completed is 0 until Iftar is done.
+                completedDays = todayData.day - 1;
+
+                if (now < sehriTime) {
+                    targetDate = sehriTime;
+                    eventName = "Upcoming: Sehri Ends";
+                    displayTime = formatTime12(todayData.sehri);
+                    
+                    rozaContainer.classList.remove('hidden');
+                    rozaText.textContent = `Days Completed: ${completedDays}`;
+
+                } else if (now >= sehriTime && now < iftarTime) {
+                    targetDate = iftarTime;
+                    eventName = "Upcoming: Iftar (Break Fast)";
+                    displayTime = formatTime12(todayData.iftar);
+                    
+                    rozaContainer.classList.remove('hidden');
+                    rozaText.textContent = `Days Completed: ${completedDays}`;
+
+                } else {
+                    // After Iftar - This day is now "Completed"
+                    const nextDayIndex = todayIndex + 1;
+                    completedDays = todayData.day; // Now it is 1 if it was day 1
+
+                    if (nextDayIndex < ramadanSchedule.length) {
+                        const nextData = ramadanSchedule[nextDayIndex];
+                        targetDate = getDateObject(nextData.date, nextData.sehri);
+                        eventName = "Tomorrow: Sehri Ends";
+                        displayTime = formatTime12(nextData.sehri);
+                        
+                        rozaContainer.classList.remove('hidden');
+                        rozaText.textContent = `Days Completed: ${completedDays}`;
+                    } else {
+                        titleEl.textContent = "Eid Mubarak";
+                        timeDisplayEl.textContent = "--";
+                        countdownEl.textContent = "00:00:00";
+                        rozaContainer.classList.add('hidden');
+                        return;
+                    }
+                }
+            }
+
+            // Update DOM
+            titleEl.textContent = eventName;
+            timeDisplayEl.textContent = displayTime;
+
+            // Calculate Countdown
+            const diff = targetDate - now;
+            
+            // Audio Alarm Logic
+            if (targetDate.getTime() !== lastTargetTime) {
+                lastTargetTime = targetDate.getTime();
+                hasPlayedAlarmForThisEvent = false; 
+            }
+
+            if (diff > 0) {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                countdownEl.textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (hours === 0 && minutes < 30) {
+                    countdownEl.classList.add('text-red-400');
+                    countdownEl.classList.remove('text-white');
+                } else {
+                    countdownEl.classList.remove('text-red-400');
+                    countdownEl.classList.add('text-white');
+                }
+            } else {
+                countdownEl.textContent = "00:00:00";
+                
+                // TRIGGER ALARM
+                if (!hasPlayedAlarmForThisEvent) {
+                    playAlarm();
+                    hasPlayedAlarmForThisEvent = true;
+                }
+            }
+        }
+
+        function populateTable() {
+            const tbody = document.getElementById('schedule-body');
+            ramadanSchedule.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "hover:bg-white/5 transition-colors";
+                
+                const now = new Date();
+                const d = getDateObject(item.date, "00:00");
+                const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth();
+                
+                // Format Date for Table: "Feb 19" -> "19 Feb"
+                const [month, dayNum] = item.date.split(' ');
+                const formattedDate = `${dayNum} ${month}`;
+
+                if(isToday) row.classList.add('bg-amber-900/30', 'border-l-2', 'border-amber-500');
+
+                row.innerHTML = `
+                    <td class="p-4">${item.day}</td>
+                    <td class="p-4 font-medium text-amber-100">${formattedDate}</td>
+                    <td class="p-4">${formatTime12(item.sehri)}</td>
+                    <td class="p-4">${formatTime12(item.iftar)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function toggleSchedule() {
+            const modal = document.getElementById('schedule-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // --- Initialization ---
+        populateTable();
+        setInterval(updateClock, 1000); // 1-second interval
+        updateClock(); // Initial call
+        
+    </script>
+</body>
+</html>
